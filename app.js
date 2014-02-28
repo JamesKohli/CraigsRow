@@ -10,9 +10,14 @@ var http = require('http');
 var path = require('path');
 var request = require('request');
 var cheerio = require('cheerio');
-var redis = require('redis');
+var redis = require('redis'), client = redis.createClient();;
 
 var app = express();
+
+//redis stuff
+client.on("error", function (err) {
+        console.log("Error " + err);
+    });
 
 // all environments
 app.set('port', process.env.PORT || 3000);
@@ -30,6 +35,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
+client.flushall();
 
 app.get('/', routes.index);
 app.get('/users', user.list);
@@ -42,19 +48,32 @@ setInterval(function() {
   if (!error && response.statusCode == 200) {
     console.log('Searched listings') // Print the craigslist results
 	$ = cheerio.load(body);
-	//search longitude >=-74.009 and <= -73.933
-	//longitude >= 40.697 longitude <= 40.797
 	
+	//check each listing
 	$('p.row').each(function(){
-		console.log($(this).attr('data-longitude'));
-		if ($(this).attr('data-longitude') >= -74.009 && $(this).attr('data-longitude') <= -73.933)
-			console.log('Listing found!');
-	//for each listing
-		//if link doesn't exist in db
-			//save on link
-			//save date
-			//save location
-			//socket.emit(posting)
+		
+		//if it's in the right price range and area		
+		if ($(this).attr('data-longitude') >= -74.009 && $(this).attr('data-longitude') <= -73.933
+			&& $(this).attr('data-latitude') >= 40.697 && $(this).attr('data-latitude') <= 40.797
+			){
+			console.log($(this).find('.pl').text());
+			var pid = $(this).attr('data-pid');
+			var listing = $(this).find('.pl').text();
+			var price = $(this).find('.price').first().text();
+			var link = 'http://newyork.craigslist.com/' + $(this).find('a').attr('href');
+			//check for listing
+			client.get(pid + ':pid', (function(pid, listing, price, link){
+			return function(err, replies){
+				if (replies === null){
+						client.set(pid + ':pid', pid);
+						client.set(pid + ':listing', listing);
+						client.set(pid + ':price', price);
+						client.set(pid + ':link', link);
+						console.log(pid + ' saved!');
+				} else {
+					console.log('Listing ' + replies + ' already saved')
+				}
+			}})(pid, listing, price, link));			
 		}
 	});
   }
