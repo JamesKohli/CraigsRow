@@ -1,5 +1,38 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+	div.container
+		div.well.well-lg
+			div.jumbotron
+				h1= title
+				p A tiny app to set up Craigslist email notifications
+			label(for="city-selector") 1. Select your city
+			div.dropdown
+				button.btn.dropdown-toggle.btn-primary#city-selector(type="button", data-toggle="dropdown") Select City 
+					span.caret
+				ul.dropdown-menu(role="menu", aria-labelledby="city")
+					li.city(role="presentation")
+						a(role="menuitem") New York City
+					li.city(role="presentation")
+						a(role="menuitem") San Francisco
+					li.city(role="presentation")
+						a(role="menuitem") Chicago
+			br
+			br
+			form.form-inline(role="form")
+				label(for="search-terms") 2. Enter search term and price range. Set the minimum price above 1 to ignore results without a listed price.
+				input.form-control#search-terms(placeholder='Search term, e.g. "Rowing Machine"', size="80")
+				input.form-control#min-price(type="number", size="8", placeholder='Min Price, e.g. "2"')
+				input.form-control#max-price(type="number", size="8", placeholder='Max Price, e.g. "100"')
+			br
+			br
+			form(role="form")
+				div.form-group
+					label(for="email-address") 3. Enter email address
+					input.form-control#email-address(placeholder='someone@gmail.com', type='email')
+			br
+			br
+			label(for="submit") 4. Done! Submit to start receiving email updates when items you're looking for get posted.
+			div.row
+				div.span6(align="center")
+					button.btn-primary.btn-lg#submit(align="center") Submit!
