@@ -35,21 +35,28 @@ app.get('/', routes.index);
 app.get('/users', user.list);
 
 //check for new postings every 15 minutes
-var minutes = 1, the_interval = minutes * 60 * 1000;
+var minutes = .1, the_interval = minutes * 60 * 1000;
 setInterval(function() {
   console.log("I am doing my 1 minutes check");
   request('http://newyork.craigslist.org/search/sss?zoomToPosting=&catAbb=sss&query=rowing+machine&minAsk=2&maxAsk=500&sort=rel&excats=', function (error, response, body) {
   if (!error && response.statusCode == 200) {
-    console.log(body) // Print the craigslist results
+    console.log('Searched listings') // Print the craigslist results
 	$ = cheerio.load(body);
-	//search longitude >=74.009 and <= -73.933
+	//search longitude >=-74.009 and <= -73.933
 	//longitude >= 40.697 longitude <= 40.797
+	
+	$('p.row').each(function(){
+		console.log($(this).attr('data-longitude'));
+		if ($(this).attr('data-longitude') >= -74.009 && $(this).attr('data-longitude') <= -73.933)
+			console.log('Listing found!');
 	//for each listing
 		//if link doesn't exist in db
 			//save on link
 			//save date
 			//save location
 			//socket.emit(posting)
+		}
+	});
   }
 })
 }, the_interval);
