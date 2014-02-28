@@ -10,7 +10,16 @@ var http = require('http');
 var path = require('path');
 var request = require('request');
 var cheerio = require('cheerio');
-var redis = require('redis'), client = redis.createClient();;
+
+if (process.env.REDISTOGO_URL) {
+    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+	var client = require("redis").createClient(rtg.port, rtg.hostname);
+
+	redis.client.auth(rtg.auth.split(":")[1]);
+	
+} else {
+    var client = require("redis").createClient();
+}
 
 var app = express();
 
