@@ -12,19 +12,19 @@ var request = require('request');
 var cheerio = require('cheerio');
 
 if (process.env.REDISTOGO_URL) {
-    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
-	var client = require("redis").createClient(rtg.port, rtg.hostname);
+    var rtg = require("url").parse(process.env.REDISTOGO_URL);
+	var redis = require("redis").createClient(rtg.port, rtg.hostname);
 
-	redis.client.auth(rtg.auth.split(":")[1]);
+	redis.redis.auth(rtg.auth.split(":")[1]);
 	
 } else {
-    var client = require("redis").createClient();
+    var redis = require("redis").createClient();
 }
 
 var app = express();
 
 //redis stuff
-client.on("error", function (err) {
+redis.on("error", function (err) {
         console.log("Error " + err);
     });
 
@@ -44,15 +44,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
-client.flushall();
+redis.flushall();
 
 app.get('/', routes.index);
 app.get('/users', user.list);
 
 //check for new postings every 15 minutes
-var minutes = .1, the_interval = minutes * 60 * 1000;
+var minutes = 15, the_interval = minutes * 60 * 1000;
 setInterval(function() {
-  console.log("I am doing my 1 minutes check");
+  console.log("I am doing my 15 minutes check");
   request('http://newyork.craigslist.org/search/sss?zoomToPosting=&catAbb=sss&query=rowing+machine&minAsk=2&maxAsk=500&sort=rel&excats=', function (error, response, body) {
   if (!error && response.statusCode == 200) {
     console.log('Searched listings') // Print the craigslist results
@@ -71,13 +71,13 @@ setInterval(function() {
 			var price = $(this).find('.price').first().text();
 			var link = 'http://newyork.craigslist.com/' + $(this).find('a').attr('href');
 			//check for listing
-			client.get(pid + ':pid', (function(pid, listing, price, link){
+			redis.get(pid + ':pid', (function(pid, listing, price, link){
 			return function(err, replies){
 				if (replies === null){
-						client.set(pid + ':pid', pid);
-						client.set(pid + ':listing', listing);
-						client.set(pid + ':price', price);
-						client.set(pid + ':link', link);
+						redis.set(pid + ':pid', pid);
+						redis.set(pid + ':listing', listing);
+						redis.set(pid + ':price', price);
+						redis.set(pid + ':link', link);
 						console.log(pid + ' saved!');
 				} else {
 					console.log('Listing ' + replies + ' already saved')
